@@ -1,0 +1,16 @@
+0123456789012345
+1wwwwwwwwwwwwwww
+2waaa          w
+3waga          w
+4waaa          w
+5w        2    w
+6w    h        w
+7w             w
+8w          1  w
+9w             w
+0wwwww         w
+1w   gf   v    w	
+2w    f        w
+3w o  f        w
+4w    f        w
+5wwwwwwwwwwwwwww
