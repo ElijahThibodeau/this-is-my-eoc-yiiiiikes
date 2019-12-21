@@ -1,0 +1,210 @@
+import pygame
+from pygame.locals import *
+
+class player:
+   def __init__(self, row, col, name):
+       self.col = col
+       self.row = row
+       self.inv = ""
+       self.name = ""
+   def updatePos(self,row,col):
+       self.row = row
+       self.col = col
+   def pickUpItem(self,name):
+       self.inv += (name +  ",")
+   def getCoords(self):
+       return (self.col,self.row)
+
+
+
+
+
+
+sample = None
+arr = []
+orgarr = []
+winwidth = 0
+winheight = 0
+level = 1
+boxsize=70
+FPS = 30
+screen = pygame.display.set_mode((0,0))
+boardwidth = 0
+resetBoard = False
+
+
+def readTxtFile(name):
+   global sample,winwidth, winheight
+   sample = open(name)
+   for line in sample:
+           temp = []
+           temp2 = []
+           for x in range(0,len(line)):
+               temp.append(line[x])
+               temp2.append(line[x])
+           arr.append(temp)
+           orgarr.append(temp2)
+           winwidth = max(winwidth, len(line) * boxsize - boxsize)
+           winheight += boxsize
+   boardwidth = winwidth
+   winwidth += 300
+clock = pygame.time.Clock()
+fire = pygame.transform.scale(pygame.image.load('fire.png'), (boxsize, boxsize)).convert() #fire is f
+fire.set_colorkey(0,0)
+firesuit = pygame.transform.scale(pygame.image.load('firesuit.jpg'), (boxsize, boxsize)).convert() #firesuit is v
+firesuit.set_colorkey(0,0)
+orcasuit = pygame.transform.scale(pygame.image.load('whalesuit.jpg'), (boxsize, boxsize)).convert() #orca is o
+orcasuit.set_colorkey(0,0)
+hint = pygame.image.load('hint.png').convert()
+water = pygame.transform.scale(pygame.image.load('water.png'), (boxsize, boxsize)).convert() #WATER IS a
+
+water.set_colorkey(0,0)
+level = 1
+
+#            R      G       B
+YELLOW =    (255,   255,    51)
+BLACK =     (0,     0,      0)
+RED =       (255,   0,      0)
+GREEN =     (0,     255,    0)
+GRAY =      (150,   150,    150)
+DKGRAY = (100,100,100)
+
+p1 = None
+p2 = None
+def drawBoard():
+   for i in range(0, len(arr)):
+       for j in range(0,len(arr[i])):
+               updateSquare(i,j)
+def updateSquare(i,j):
+   global p1,p2
+   if arr[i][j] == ' ':
+       (left, top) = (i * boxsize, j * boxsize)
+       (right, bot) = ((i + 1) * boxsize, (j + 1) * boxsize)
+       pygame.draw.rect(screen, GRAY, (top, left, boxsize, boxsize))
+       pygame.draw.aaline(screen, BLACK, (top, left), (bot, left), 1)
+       pygame.draw.aaline(screen, BLACK, (top, left), (top, right), 1)
+       pygame.display.update()
+   if arr[i][j] == '1' or arr[i][j] == '2':
+       (left, top) = (i * boxsize, j * boxsize)
+       (right, bot) = ((i + 1) * boxsize, (j + 1) * boxsize)
+       pygame.draw.rect(screen, YELLOW, (top, left, boxsize, boxsize))
+       pygame.draw.aaline(screen, BLACK, (top, left), (bot, left), 1)
+       pygame.draw.aaline(screen, BLACK, (top, left), (top, right), 1)
+       pygame.display.update()
+       if(arr[i][j] == '1'):
+           p1 = player(i,j,'1')
+       else:
+           p2 = player(i,j,'2')
+   if arr[i][j] == 'w':
+       (left, top) = (i * boxsize, j * boxsize)
+       (right, bot) = ((i + 1) * boxsize, (j + 1) * boxsize)
+       pygame.draw.rect(screen, DKGRAY, (top, left, boxsize, boxsize))
+       pygame.draw.aaline(screen, BLACK, (top, left), (bot, left), 1)
+       pygame.draw.aaline(screen, BLACK, (top, left), (top, right), 1)
+       pygame.display.update()
+   if arr[i][j] == 'f':
+       (left,top) = (i*boxsize, j*boxsize)
+       screen.blit(fire,(left,top))
+   pygame.display.update()
+   if(arr[i][j] == 'h'):
+       screen.blit(hint, (0,0))
+   if(arr[i][j] == 'o'):
+       (left,top) = (i*boxsize, j*boxsize)
+       screen.blit(orcasuit, (left,top))
+def moveUp(obj, x = -1, y = -1):
+   if(y >= 1 and arr[y-1][x] != 'w'):
+       arr[y-1][x] = obj
+       arr[y][x] = ' '
+       updateSquare(y-1,x)
+       updateSquare(y,x)
+   else:
+       for row in range(1, len(arr)):
+           for col in range(0, len(arr[row])-1):
+               if arr[row][col] == obj and arr[row-1][col] != 'w':
+                   arr[row-1][col] = obj
+                   arr[row][col] = ' '
+                   updateSquare(row-1,col)
+                   updateSquare(row,col)
+def moveDown(obj, x = -1, y = -1):
+   if(y >= 0 and arr[y+1][x] != 'w'):
+       arr[y+1][x] = obj
+       arr[y][x] = ' '
+       updateSquare(y,x)
+       updateSquare(y+1,x)
+   else:
+       for invrow in range(0,len(arr)-1):
+           row = len(arr) - 1 - invrow
+           for invcol in range(0, len(arr[row]) - 1):
+               col = len(arr[row]) - 1 - invcol
+               if(arr[row][col] == obj and arr[row+1][col] != 'w'):
+                   arr[row+1][col] = obj
+                   arr[row][col] = ' '
+                   updateSquare(row+1,col)
+                   updateSquare(row,col)
+
+def moveLeft(obj, x = -1, y = -1):
+   if(x>= 1 and arr[y][x-1] != 'w'):
+       arr[y][x-1] = obj
+       arr[y][x] = ' '
+       updateSquare(y,x)
+       updateSquare(y,x-1)
+   else:
+       for row in range(1,len(arr)):
+           for col in range(0,len(arr[row])-1):
+               if arr[row][col] == obj and arr[row][col-1] != 'w':
+                   arr[row][col-1] = obj
+                   arr[row][col] = ' '
+                   updateSquare(row,col-1)
+                   updateSquare(row,col)
+
+def moveRight(obj, x = -1, y = -1):
+   if(x >= 0 and arr[y][x+1] != 'w'):
+       arr[y][x+1] = obj
+       arr[y][x] = ' '
+       updateSquare(y,x+1)
+       updateSquare(y,x)
+   else:
+       for invrow in range(0,len(arr)):
+           row = len(arr) - 1 - invrow
+           for invcol in range(0, len(arr[row]) - 1):
+               col = len(arr[row]) - 1 - invcol
+               if(arr[row][col] == obj and arr[row][col+1] != 'w'):
+                   arr[row][col+1] = obj
+                   arr[row][col] = ' '
+                   updateSquare(row,col+1)
+                   updateSquare(row,col)
+
+
+
+def main():
+   global clock,resetBoard
+   level = 1
+   running = True
+   readTxtFile("level%s.txt" %level)
+   screen = pygame.display.set_mode((winwidth, winheight))
+   drawBoard()
+   while running:
+       if resetBoard:
+           drawBoard()
+       for event in pygame.event.get():
+           if event.type == QUIT:
+               running = False
+           if event.type == KEYDOWN:
+               (x,y) = p1.getCoords()
+               (x2,y2) = p2.getCoords()
+               if event.key in(K_UP, K_w):
+                   moveUp('1',x,y)
+                   moveDown('2',x2,y2)
+               elif event.key in (K_DOWN, K_s):
+                   moveDown('1',x,y)
+                   moveUp('2',x2,y2)
+               elif event.key in(K_RIGHT, K_d):
+                   moveRight('1',x,y)
+                   moveLeft('2',x2,y2)
+               elif event.key in(K_LEFT, K_a):
+                   moveLeft('1', x,y)
+                   moveRight('2',x2,y2)
+main()
+
+
+
